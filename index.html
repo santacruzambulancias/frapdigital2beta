@@ -11,7 +11,7 @@
             --naranja: #e67e22; 
             --verde: #27ae60; 
             --verde-bandera: #006837;
-            --rojo: #006837; 
+            --rojo: #e74c3c; 
             --azul: #2980b9; 
             --bg-body: #f8f9fa;
             --bg-card: #ffffff;
@@ -74,18 +74,6 @@
         canvas { width: 100% !important; height: 100% !important; display: block; }
         .btn-clear { position: absolute; top: 2px; right: 2px; background: var(--rojo); color: white; border: none; padding: 2px 5px; border-radius: 3px; cursor: pointer; font-size: 8px; z-index: 10; }
 
-      @media screen {
-    .sig-box {
-        height: 150px !important;
-    }
-}
-
-        canvas { 
-    width: 100% !important; 
-    height: 100% !important; 
-    display: block;
-
-canvas { width: 100% !important; height: 100% !important; display: block; }
         .btn-plus { background: var(--verde); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer; font-size: 14px; }
         .btn-main { padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; width: 100%; margin-top: 10px; }
         .list-area { background: var(--bg-input); border: 1px dashed var(--border-light); padding: 4px; border-radius: 4px; font-size: 10px; min-height: 18px; color: var(--text-dark); }
@@ -140,7 +128,7 @@ canvas { width: 100% !important; height: 100% !important; display: block; }
                 <td style="width:15%"><img id="logo2" width="45"></td>
             </tr>
         </table>
-        <div style="display:flex; justify-content:space-between; font-size:8.5px; margin-top:2px; background:#f8f9fa; padding:3px; border:1px solid #ffffff; color: black;">
+        <div style="display:flex; justify-content:space-between; font-size:8.5px; margin-top:2px; background:#f8f9fa; padding:3px; border:1px solid #dee2e6; color: black;">
             <span>FOLIO: <b id="pdf-fol" style="color:red;"></b></span>
             <span>FECHA: <b id="pdf-fec"></b></span>
         </div>
@@ -190,14 +178,13 @@ canvas { width: 100% !important; height: 100% !important; display: block; }
             </div>
 
             <div class="grid">
-                <div><label>Despacho</label><input type="time" data-label="Despacho"></div>
-                <div><label>Arribo</label><input type="time" data-label="Arribo"></div>
-                <div><label>Traslado</label><input type="time" data-label="Traslado"></div>
-                <div><label>Destino</label><input type="time" data-label="Destino"></div>
-                <div><label>2do Traslado</label><input type="time" data-label="2do Traslado"></div>
-                <div><label>2do Destino</label><input type="time" data-label="2do Destino"></div>
+                <div><label>Despacho</label><input type="time" data-label="T. Despacho"></div>
+                <div><label>Arribo</label><input type="time" data-label="T. Arribo"></div>
+                <div><label>Traslado</label><input type="time" data-label="T. Traslado"></div>
+                <div><label>2do Traslado</label><input type="time" data-label="T. 2do Traslado"></div>
+                <div><label>2do Destino</label><input type="time" data-label="T. 2do Destino"></div>
                 <div><label>Tiempo de Espera</label><input type="time" data-label="T. de Espera"></div>
-                <div><label>Fin</label><input type="time" data-label="Final"></div>
+                <div><label>Fin</label><input type="time" data-label="T. Fin"></div>
             </div>
         </div>
     </details>
@@ -487,19 +474,10 @@ canvas { width: 100% !important; height: 100% !important; display: block; }
             </div>
 
             <div class="sig-container pdf-section">
-                <label>Médico / Hospital</label>
+                <label>Paciente / Familiar</label>
                 <div class="sig-box">
                     <button type="button" class="btn-clear no-pdf" onclick="pads.pc.clear()">Limpiar</button>
                     <canvas id="sig-pc"></canvas>
-                </div>
-                <input type="text" data-label="Médico / Hospital" placeholder="Médico/Hospital">
-            </div>
-            
-            <div class="sig-container pdf-section">
-                <label>Paciente / Familiar</label>
-                <div class="sig-box">
-                    <button type="button" class="btn-clear no-pdf" onclick="pads.px.clear()">Limpiar</button>
-                    <canvas id="sig-px"></canvas>
                 </div>
                 <input type="text" data-label="Paciente / Familiar" placeholder="Nombre/Parentesco">
             </div>
@@ -516,7 +494,7 @@ canvas { width: 100% !important; height: 100% !important; display: block; }
 </div>
 
 <div class="no-pdf" style="padding:15px; max-width:850px; margin:auto;">
-    <button class="btn-main" style="background:var(--rojo);" onclick="generarPDF()">💾 GENERAR FRAP - PDF </button>
+    <button class="btn-main" style="background:var(--rojo);" onclick="generarPDF()">💾 GENERAR PDF (OFICIO - 1 PÁG)</button>
 </div>
 
 <script>
@@ -562,18 +540,6 @@ function actualizarColorPrioridad() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    ['pa', 'pc'].forEach(id => {
-        const canvas = document.getElementById(`sig-${id}`);
-        if (canvas) {
-            pads[id] = new SignaturePad(canvas, {
-                backgroundColor: 'rgba(255, 255, 255, 0)',
-                penColor: 'rgb(0, 0, 0)'
-            });
-        }
-    });
-});
-  
 function drawBodyOutline(ctx, isAnterior) {
     ctx.clearRect(0, 0, 110, 170);
     ctx.strokeStyle = '#444';
@@ -701,7 +667,7 @@ function resizeCanvas() {
     if (window.innerWidth === anchoPantalla) return;
     anchoPantalla = window.innerWidth;
 
-    ['pa', 'px', 'pc'].forEach(id => {
+    ['pa', 'pc'].forEach(id => {
         const canvas = document.getElementById('sig-' + id);
         if (canvas) {
             const datosFirma = pads[id] && !pads[id].isEmpty() ? pads[id].toData() : null;
@@ -724,12 +690,12 @@ window.onload = () => {
     const n = localStorage.getItem('frap_n') || 1;
     const hoy = new Date().toLocaleDateString('es-MX');
     
-    document.getElementById('pdf-fol').innerText = "DA-" + String(n).padStart(5, '0');
+    document.getElementById('pdf-fol').innerText = "AJTP-" + String(n).padStart(5, '0');
     document.getElementById('web-fol').innerText = document.getElementById('pdf-fol').innerText;
     document.getElementById('pdf-fec').innerText = hoy;
     document.getElementById('web-fec').innerText = hoy;
 
-    ['pa', 'px', 'pc'].forEach(id => {
+    ['pa', 'pc'].forEach(id => {
         const canvas = document.getElementById('sig-' + id);
         if (canvas) {
             pads[id] = new SignaturePad(canvas, { 
@@ -889,7 +855,7 @@ async function generarPDF() {
         }
     });
 
-    ['pa', 'px', 'pc'].forEach(id => {
+    ['pa', 'pc'].forEach(id => {
         const sigBox = clon.querySelector(`#sig-${id}`);
         if(sigBox) {
             const wrapper = sigBox.parentElement;
