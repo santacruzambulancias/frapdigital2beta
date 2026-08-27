@@ -929,7 +929,7 @@ async function generarPDF() {
         filename: `FRAP_${document.getElementById('pdf-fol').innerText}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 1.8, useCORS: true, logging: false, scrollY: 0 },
-        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+        jsPDF: { unit: 'mm', format: 'legal', orientation: 'portrait' },
         pagebreak: { mode: [] }
     };
 
