@@ -80,6 +80,11 @@
     }
 }
 
+        canvas { 
+    width: 100% !important; 
+    height: 100% !important; 
+    display: block;
+
 canvas { width: 100% !important; height: 100% !important; display: block; }
         .btn-plus { background: var(--verde); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer; font-size: 14px; }
         .btn-main { padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; width: 100%; margin-top: 10px; }
@@ -558,15 +563,20 @@ function actualizarColorPrioridad() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const ids = ['pa', 'pc']; // IDs de tus firmas (sig-pa, sig-pc)
+    const ids = ['pa', 'px', 'pc']; // IDs de tus firmas (sig-pa, sig-pc)
     
     ids.forEach(id => {
         const canvas = document.getElementById(`sig-${id}`);
         if (canvas) {
-            // Asignamos una resolución interna fija de alta calidad
-            // Esto evita que se borre al girar la pantalla
-            canvas.width = canvas.offsetWidth || 400;
-            canvas.height = 150; // coincide con la altura máxima de pantalla
+            const ratio = window.devicePixelRatio || 1;
+            
+            // Ajustamos la resolución del canvas exactamente a la altura del PDF (60px)
+            // multiplicada por la densidad del dispositivo (pantallas retina/HD)
+            canvas.width = (canvas.offsetWidth || 300) * ratio;
+            canvas.height = 60 * ratio; 
+
+            const ctx = canvas.getContext("2d");
+            ctx.scale(ratio, ratio);
 
             // Inicializamos SignaturePad
             pads[id] = new SignaturePad(canvas, {
