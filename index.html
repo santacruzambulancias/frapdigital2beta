@@ -563,22 +563,9 @@ function actualizarColorPrioridad() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const ids = ['pa', 'px', 'pc']; // IDs de tus firmas (sig-pa, sig-pc)
-    
-    ids.forEach(id => {
+    ['pa', 'pc'].forEach(id => {
         const canvas = document.getElementById(`sig-${id}`);
         if (canvas) {
-            const ratio = window.devicePixelRatio || 1;
-            
-            // Ajustamos la resolución del canvas exactamente a la altura del PDF (60px)
-            // multiplicada por la densidad del dispositivo (pantallas retina/HD)
-            canvas.width = (canvas.offsetWidth || 300) * ratio;
-            canvas.height = 60 * ratio; 
-
-            const ctx = canvas.getContext("2d");
-            ctx.scale(ratio, ratio);
-
-            // Inicializamos SignaturePad
             pads[id] = new SignaturePad(canvas, {
                 backgroundColor: 'rgba(255, 255, 255, 0)',
                 penColor: 'rgb(0, 0, 0)'
