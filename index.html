@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FRAP - Ambulancias Santa Cruz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        :root { 
+            --naranja: #e67e22; 
+            --verde: #27ae60; 
+            --verde-bandera: #006837;
+            --rojo: #006837; 
+            --azul: #2980b9; 
+            --bg-body: #f8f9fa;
+            --bg-card: #ffffff;
+            --bg-input: #f1f3f5;
+            --text-dark: #212529;
+            --border-light: #ced4da;
+        }
+        
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-body); color: var(--text-dark); margin: 0; padding: 0; }
+        #frap-form { background: var(--bg-body); max-width: 850px; margin: auto; padding-bottom: 5px; overflow: visible !important; box-sizing: border-box; }
+        .no-pdf { display: block; }
+        .titulo-principal { background: var(--naranja); color: white; text-align: center; padding: 8px; font-weight: bold; font-size: 16px; }
+        
+        #pdf-header { display: none; padding: 2px 5px; border-bottom: 2px solid var(--rojo); margin-bottom: 4px; background: white; color: black; }
+        .h-table { width: 100%; border-collapse: collapse; text-align: center; }
+        
+        details { border-bottom: 1px solid var(--border-light); background: var(--bg-card); margin-bottom: 2px; }
+        summary { padding: 6px 10px; cursor: pointer; font-weight: bold; color: var(--text-dark); background: #e9ecef; font-size: 11px; border-left: 4px solid var(--naranja); }
+        details:nth-child(even) summary { border-left-color: var(--verde); }
+        .content { padding: 6px; display: flex; flex-direction: column; gap: 4px; background: var(--bg-card); }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 4px; }
+        .grid-full { grid-column: 1 / -1; width: 100%; }
+        
+        input, select, textarea { 
+            width: 100%; 
+            padding: 4px; 
+            border: 1px solid var(--border-light); 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-size: 10px; 
+            background: var(--bg-input);
+            color: var(--text-dark);
+            transition: background-color 0.3s, color 0.3s; 
+        }
+
+        select[multiple] {
+            height: 75px;
+            padding: 2px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--naranja);
+            background: #ffffff;
+        }
+        
+        label { font-size: 9px; font-weight: bold; color: #495057; display: block; margin-bottom: 1px; }
+
+        .table-wrapper { overflow-x: auto; margin-top: 2px; }
+        table { width: 100%; border-collapse: collapse; font-size: 8.5px; background: #ffffff; color: var(--text-dark); }
+        th, td { border: 1px solid var(--border-light); padding: 2px; text-align: center; }
+        th { background: #e9ecef; color: var(--text-dark); font-weight: bold; }
+
+        #seccion-firmas { padding: 4px; background: var(--bg-card); border-top: 2px solid var(--rojo); margin-top: 4px; display: block !important; }
+        
+        .firmas-stack { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        .sig-container { margin-bottom: 2px; width: 100%; }
+        .sig-box { position: relative; border: 1px solid var(--border-light); height: 60px; background: #fff; width: 100%; border-radius: 4px; touch-action: none; }
+        canvas { width: 100% !important; height: 100% !important; display: block; }
+        .btn-clear { position: absolute; top: 2px; right: 2px; background: var(--rojo); color: white; border: none; padding: 2px 5px; border-radius: 3px; cursor: pointer; font-size: 8px; z-index: 10; }
+
+      @media screen {
+    .sig-box {
+        height: 150px !important;
+    }
+}
+
+canvas { width: 100% !important; height: 100% !important; display: block; }
+        .btn-plus { background: var(--verde); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-main { padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; width: 100%; margin-top: 10px; }
+        .list-area { background: var(--bg-input); border: 1px dashed var(--border-light); padding: 4px; border-radius: 4px; font-size: 10px; min-height: 18px; color: var(--text-dark); }
+
+        .pdf-section { margin-bottom: 4px; display: block !important; }
+        .nota-legal { font-size: 6px; color: #6c757d; text-align: justify; margin-top: 4px; line-height: 1; border-top: 1px solid var(--border-light); padding-top: 2px; }
+
+        .body-map-container { display: flex; flex-wrap: nowrap; justify-content: center; gap: 8px; margin: 2px 0; background: var(--bg-input); padding: 4px; border: 1px solid var(--border-light); border-radius: 4px; }
+        .body-canvas-wrapper { position: relative; text-align: center; }
+        .body-canvas-wrapper canvas { border: 1px solid #ced4da; background: #fff; border-radius: 4px; cursor: crosshair; width: 110px; height: 170px; }
+        .body-controls { margin-top: 1px; display: flex; justify-content: space-between; align-items: center; }
+
+        .checklist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 4px; margin: 4px 0; background: var(--bg-input); padding: 6px; border-radius: 4px; border: 1px solid var(--border-light); }
+        .checklist-item { display: flex; align-items: center; gap: 4px; font-size: 9.5px; color: var(--text-dark); }
+        .checklist-item input[type="checkbox"] { width: auto; cursor: pointer; }
+
+        .pdf-columns-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            align-items: start;
+        }
+        .pdf-col-item {
+            font-size: 8px !important;
+            margin-bottom: 2px !important;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 1px;
+            line-height: 1.1;
+            color: black !important;
+        }
+
+        .prio-verde { background-color: #4CAF50 !important; color: white !important; font-weight: bold; }
+        .prio-amarillo { background-color: #FFEB3B !important; color: black !important; font-weight: bold; }
+        .prio-rojo { background-color: #F44336 !important; color: white !important; font-weight: bold; }
+        .prio-negro { background-color: #212121 !important; color: white !important; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="frap-form">
+    <div id="pdf-header">
+        <table class="h-table">
+            <tr>
+                <td style="width:15%"><img id="logo1" width="45"></td>
+                <td>
+                    <h3 style="margin:0; color:var(--rojo); font-size:13px;">AMBULANCIAS SANTA CRUZ</h3>
+                    <p style="margin:1px; font-size:9px; font-weight:bold; color: black;">REGISTRO DE ACCIÓN PREHOSPITALARIA</p>
+                    <p style="margin:0; font-size:7.5px; color: black;">Santa Cruz Servicios de Salud | FRAP DIGITAL V.1.1.2</p>
+                </td>
+                <td style="width:15%"><img id="logo2" width="45"></td>
+            </tr>
+        </table>
+        <div style="display:flex; justify-content:space-between; font-size:8.5px; margin-top:2px; background:#f8f9fa; padding:3px; border:1px solid #ffffff; color: black;">
+            <span>FOLIO: <b id="pdf-fol" style="color:red;"></b></span>
+            <span>FECHA: <b id="pdf-fec"></b></span>
+        </div>
+    </div>
+
+    <div class="titulo-principal no-pdf">FRAP DIGITAL v1.1.0</div>
+    
+    <div class="no-pdf" style="padding:8px; background:var(--bg-card); display:flex; justify-content:space-between; border-bottom:1px solid var(--border-light); font-size:12px;">
+        <span>Folio: <b id="web-fol" style="color:var(--naranja);">---</b></span>
+        <span>Fecha: <b id="web-fec">--/--/----</b></span>
+    </div>
+
+    <!-- SECCIÓN 1 -->
+    <details open>
+        <summary>1. DATOS DE LA UNIDAD Y CRONOMETRÍA</summary>
+        <div class="content">
+            <div class="grid">
+                <div>
+                    <label>Unidad</label>
+                    <select id="unidad_select" data-label="Unidad" onchange="autoCompletarPlaca()">
+                        <option value="">-- Seleccionar Unidad --</option>
+                        <option value="02">02</option>
+                        <option value="03">03</option>
+                        <option value="04">04</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Placas</label>
+                    <input type="text" id="placas_input" data-label="Placas" placeholder="Placa" readonly>
+                </div>
+            </div>
+
+            <div class="grid-full">
+                <label>Operador</label>
+                <select data-label="Operador">
+                    <option value="">-- Seleccionar Operador --</option>
+                    <option value="ANGEL JESHUA TORRES PINEDA">ANGEL JESHUA TORRES PINEDA</option>
+                </select>
+            </div>
+            
+            <div class="grid-full">
+                <label>Tripulación</label>
+                <select data-label="Tripulación">
+                    <option value="">-- Seleccionar Tripulación --</option>
+                    <option value="KARLA LUCIA BERNAL RODRÍGUEZ">KARLA LUCIA BERNAL RODRÍGUEZ</option>
+                </select>
+            </div>
+
+            <div class="grid">
+                <div><label>Despacho</label><input type="time" data-label="Despacho"></div>
+                <div><label>Arribo</label><input type="time" data-label="Arribo"></div>
+                <div><label>Traslado</label><input type="time" data-label="Traslado"></div>
+                <div><label>Destino</label><input type="time" data-label="Destino"></div>
+                <div><label>2do Traslado</label><input type="time" data-label="2do Traslado"></div>
+                <div><label>2do Destino</label><input type="time" data-label="2do Destino"></div>
+                <div><label>Tiempo de Espera</label><input type="time" data-label="T. de Espera"></div>
+                <div><label>Fin</label><input type="time" data-label="Final"></div>
+            </div>
+        </div>
+    </details>
+    
+    <!-- SECCIÓN 2 -->
+    <details><summary>2. DATOS DEL SERVICIO Y UBICACIÓN</summary>
+        <div class="content">
+            <div class="grid">
+                <div>
+                    <label>Tipo Servicio</label>
+                    <select data-label="Tipo">
+                        <option value="URGENCIA">URGENCIA</option>
+                        <option value="TRASLADO SENCILLO">TRASLADO SENCILLO</option>
+                        <option value="T. CON OXÍGENO">T. CON OXÍGENO</option>
+                        <option value="T. REDONDO">T. REDONDO</option>
+                        <option value="REDONDO CON OXÍGENO">REDONDO CON OXÍGENO</option>
+                        <option value="TERAPIA INTERMEDIA">TERAPIA INTERMEDIA</option>
+                        <option value="TERAPIA INTENSIVA">TERAPIA INTENSIVA</option>
+                        <option value="PEDIÁTRICO">PEDIÁTRICO</option>
+                        <option value="NEONATAL">NEONATAL</option>
+                        <option value="COBERTURA DE EVENTO">COBERTURA DE EVENTO</option>
+                        <option value="MANIOBRA ASCENSO/DESCENSO">MANIOBRA ASCENSO/DESCENSO</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Cliente</label>
+                    <select data-label="Cliente">
+                        <option value="PRIVADO">PRIVADO</option>
+                        <option value="SEG. EL POTOSÍ">SEG. EL POTOSÍ</option>
+                        <option value="VIDASSISTANCE">VIDASSISTANCE</option>
+                        <option value="TELASIST">TELASIST</option>
+                        <option value="VOLUNTARIO">VOLUNTARIO</option>
+                        <option value="OTRO">OTRO</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                <label>Ubicación de Origen</label>
+                <input type="text" data-label="Ubicación Origen" placeholder="Dirección de atención/origen">
+            </div>
+            
+            <div>
+                <label>Ubicación de Destino</label>
+                <input type="text" data-label="Ubicación Destino" placeholder="Dirección del hospital o punto de entrega">
+            </div>
+            
+            <div class="grid">
+                <div><label>Lugar</label><select data-label="Lugar"><option value="Vía Pública">Vía Pública</option><option value="Domicilio">Domicilio</option><option value="Establecimiento">Establecimiento</option><option value="Hospital">Hospital</option></select></div>
+                <div><label>Folio cliente (Siniestro)</label><input type="text" data-label="Folio Cliente"></div>
+            </div>
+        </div>
+    </details>
+    
+    <!-- SECCIÓN 3 -->
+    <details><summary>3. DATOS DEL PACIENTE</summary>
+        <div class="content">
+            <div><label>Nombre</label><input type="text" id="p_nom" data-label="Paciente"></div>
+            <div class="grid">
+                <div><label>Edad</label><input type="text" data-label="Edad"></div>
+                <div><label>Género</label><select data-label="Género"><option>Masculino</option><option>Femenino</option></select></div>
+                <div><label>Contacto (Teléfono)</label><input type="text" data-label="Contacto"></div>
+            </div>
+            <div><label>Domicilio</label><input type="text" data-label="Domicilio"></div>
+            <div>
+                <label>Derechohabiencia</label>
+                <select data-label="Derechohabiencia">
+                    <option value="IMSS">IMSS</option>
+                    <option value="ISSSTE">ISSSTE</option>
+                    <option value="IMSS Bienestar">IMSS Bienestar</option>
+                    <option value="Privado">Privado</option>
+                    <option value="Sin Seguridad Social">Sin Seguridad Social</option>
+                    <option value="Fuerzas Armadas">Fuerzas Armadas</option>
+                </select>
+            </div>
+            <div><label>Antecedentes</label><textarea data-label="Antecedentes" rows="2"></textarea></div>
+        </div>
+    </details>
+    
+    <!-- SECCIÓN 4 -->
+    <details><summary>4. EXPLORACIÓN FÍSICA</summary>
+        <div class="content">
+            <div><label>Naturaleza del servicio</label><select data-label="Naturaleza del servicio"><option value="Trauma">Trauma</option><option value="Clínico">Clínico</option><option value="Evento">Evento</option><option value="Maniobra Ascenso/Descenso">Maniobra Ascenso/Descenso</option><option value="Otro">Otro</option></select></div>
+            
+            <div class="grid">
+                <div>
+                    <label>Padecimiento Clínico (multiselección)</label>
+                    <select data-label="Padecimiento Clínico" multiple>
+                        <option value="NO APLICA" selected>NO APLICA</option>
+                        <option value="Neurológico">Neurológico</option>
+                        <option value="Digestivo">Digestivo</option>
+                        <option value="Sistémico">Sistémico</option>
+                        <option value="Infeccioso">Infeccioso</option>
+                        <option value="Metabólico">Metabólico</option>
+                        <option value="Respiratorio">Respiratorio</option>
+                        <option value="Renal">Renal</option>
+                        <option value="Genital">Genital</option>
+                        <option value="Cardiovascular">Cardiovascular</option>
+                        <option value="Gineco-obstétrico">Gineco-obstétrico</option>
+                        <option value="Psiquiátrico">Psiquiátrico</option>
+                        <option value="Oncológico">Oncológico</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Especificar Pad. Clínico</label>
+                    <input type="text" data-label="Especificación Pad. Clínico" placeholder="Especificar detalle">
+                </div>
+            </div>
+
+            <div class="grid">
+                <div>
+                    <label>ACCIDENTE - INCIDENTE - TRAUMA (multiselección)</label>
+                    <select data-label="Accidente / Trauma" multiple>
+                        <option value="NO APLICA" selected>NO APLICA</option>
+                        <option value="Incidente vial">Incidente vial</option>
+                        <option value="Caída">Caída</option>
+                        <option value="Atropellamiento">Atropellamiento</option>
+                        <option value="Lesiones por arma blanca">Lesiones por arma blanca</option>
+                        <option value="Lesiones por Arma de Fuego">Lesiones por Arma de Fuego</option>
+                        <option value="Violencia/golpes">Violencia/golpes</option>
+                        <option value="Hemorragia">Hemorragia</option>
+                        <option value="Intoxicación">Intoxicación</option>
+                        <option value="Autolesiones">Autolesiones</option>
+                        <option value="Quemaduras">Quemaduras</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Especificar Accidente/Trauma</label>
+                    <input type="text" data-label="Especificación Accidente/Trauma" placeholder="Especificar detalle">
+                </div>
+            </div>
+
+            <div><label>Motivo del servicio</label><textarea data-label="Motivo del servicio" rows="2"></textarea></div>
+            <div class="grid">
+                <div><label>Pupilas</label><select data-label="Pupilas"><option>Isocóricas</option><option>Anisocóricas</option><option>Midriáticas</option><option>Mióticas</option></select></div>
+                <div><label>Estado Piel</label><select data-label="Piel"><option>Normal</option><option>Pálida</option><option>Cianótica</option><option>Diaforética</option></select></div>
+            </div>
+            <div class="grid">
+                <div><label>Auscultación</label><input type="text" data-label="Auscultación"></div>
+                <div><label>Ventilación</label><select data-label="Ventilación"><option>Eupneica</option><option>Taquipnea</option><option>Bradipnea</option><option>Apnea</option></select></div>
+            </div>
+            
+            <label style="color:var(--naranja); font-weight:bold; margin-top:2px;">Diagrama de Lesiones:</label>
+            <div class="body-map-container" data-label="Diagrama de Lesiones">
+                <div class="body-canvas-wrapper">
+                    <span style="font-size:8px; font-weight:bold; color:var(--text-dark);">Anterior</span><br>
+                    <canvas id="canvas-anterior" width="110" height="170"></canvas>
+                    <div class="body-controls no-pdf">
+                        <button type="button" style="background:var(--rojo); color:white; border:none; padding:1px 4px; border-radius:3px; font-size:8px; cursor:pointer;" onclick="limpiarBodyMap('anterior')">Deshacer</button>
+                    </div>
+                </div>
+                <div class="body-canvas-wrapper">
+                    <span style="font-size:8px; font-weight:bold; color:var(--text-dark);">Posterior</span><br>
+                    <canvas id="canvas-posterior" width="110" height="170"></canvas>
+                    <div class="body-controls no-pdf">
+                        <button type="button" style="background:var(--rojo); color:white; border:none; padding:1px 4px; border-radius:3px; font-size:8px; cursor:pointer;" onclick="limpiarBodyMap('posterior')">Deshacer</button>
+                    </div>
+                </div>
+            </div>
+
+            <label style="color:var(--naranja); font-weight:bold; margin-top:2px;">Describe zona del cuerpo con lesión:</label>
+            <div id="h_lista" class="list-area" data-label="Hallazgos"></div>
+            <div class="no-pdf grid"><input type="text" id="h_z" placeholder="Zona"><input type="text" id="h_d" placeholder="Desc."><button type="button" class="btn-plus" onclick="addHallazgo()">+</button></div>
+            
+            <label style="color:var(--naranja); font-weight:bold; margin-top:2px;">Síntomas:</label>
+            <div id="sin_lista" class="list-area" data-label="Síntomas"></div>
+            <div class="no-pdf grid"><input type="text" id="sin_i" placeholder="Síntoma..."><button type="button" class="btn-plus" onclick="addSintoma()">+</button></div>
+        </div>
+    </details>
+    
+    <!-- SECCIÓN 5 -->
+    <details><summary>5. SIGNOS VITALES</summary>
+        <div class="content">
+            <div class="grid">
+                <div><label>Nivel de Consciencia</label><select data-label="Nivel de Consciencia"><option value="Consciente">Consciente</option><option value="Alterado">Alterado</option><option value="Inconsciente">Inconsciente</option><option value="Somnoliento">Somnoliento</option><option value="Probable etílico">Probable etílico</option><option value="Prob. Estupefacientes">Prob. Estupefacientes</option></select></div>
+                <div><label>AVDI</label><select data-label="AVDI General"><option value="ALERTA">ALERTA</option><option value="VERBAL">VERBAL</option><option value="DOLOR">DOLOR</option><option value="INCONSCIENTE">INCONSCIENTE</option></select></div>
+            </div>
+            <div class="table-wrapper"><table><thead><tr><th>Hora</th><th>FC</th><th>FV</th><th>TA</th><th>SpO2</th><th>Temp</th><th>Glsg</th><th>AVDI</th></tr></thead><tbody id="s_body"></tbody></table></div>
+            <div class="no-pdf grid" style="background:var(--bg-input); padding:4px;"><input type="time" id="s_h" title="Hora"><input type="text" id="s_fc" placeholder="FC"><input type="text" id="s_fv" placeholder="FV"><input type="text" id="s_ta" placeholder="TA"><input type="text" id="s_sp" placeholder="SpO2"><input type="text" id="s_temp" placeholder="Temp"><input type="text" id="s_g" placeholder="Glsg"><select id="s_avdi"><option value="ALERTA">ALERTA</option><option value="VERBAL">VERBAL</option><option value="DOLOR">DOLOR</option><option value="INCONSCIENTE">INCONSCIENTE</option></select><button type="button" class="btn-plus" onclick="addSigno()">+</button></div>
+            
+            <div>
+                <label style="margin-top:2px;">Prioridad del Paciente</label>
+                <select id="prio_select" data-label="Prioridad" onchange="actualizarColorPrioridad()">
+                    <option value="Verde/Tercera">Verde / Tercera</option>
+                    <option value="Amarillo/Segunda">Amarillo / Segunda</option>
+                    <option value="Roja/Primera">Roja / Primera</option>
+                    <option value="Negra/Fallecido">Negra / Fallecido</option>
+                </select>
+            </div>
+        </div>
+    </details>
+    
+    <!-- SECCIÓN 6 -->
+    <details><summary>6. TRATAMIENTO Y MEDICAMENTOS</summary>
+        <div class="content">
+            <label style="color:var(--naranja); font-weight:bold;">Intervenciones / Procedimientos:</label>
+            <div class="checklist-grid" id="checklist_intervenciones">
+                <label class="checklist-item"><input type="checkbox" value="Valoración de Trauma"> Valoración de Trauma</label>
+                <label class="checklist-item"><input type="checkbox" value="Toma de signos vitales"> Toma de signos vitales</label>
+                <label class="checklist-item"><input type="checkbox" value="Curación"> Curación</label>
+                <label class="checklist-item"><input type="checkbox" value="Antisepsia de heridas"> Antisepsia de heridas</label>
+                <label class="checklist-item"><input type="checkbox" value="Inmovilización"> Inmovilización</label>
+                <label class="checklist-item"><input type="checkbox" value="Manejo de vía aérea"> Manejo de vía aérea</label>
+                <label class="checklist-item"><input type="checkbox" value="RCP Básico"> RCP Básico</label>
+                <label class="checklist-item"><input type="checkbox" value="RCP Avanzado"> RCP Avanzado</label>
+                <label class="checklist-item"><input type="checkbox" value="Monitoreo de signos vitales"> Monitoreo de signos vitales</label>
+                <label class="checklist-item"><input type="checkbox" value="EKG"> EKG</label>
+                <label class="checklist-item"><input type="checkbox" value="Aspiración"> Aspiración</label>
+                <label class="checklist-item"><input type="checkbox" value="Fluidoterapia"> Fluidoterapia</label>
+                <label class="checklist-item"><input type="checkbox" value="Ventilación"> Ventilación</label>
+                <label class="checklist-item"><input type="checkbox" value="Desfibrilación"> Desfibrilación</label>
+                <label class="checklist-item"><input type="checkbox" value="CPAP"> CPAP</label>
+                <label class="checklist-item"><input type="checkbox" value="Ventilación Invasiva"> Ventilación Invasiva</label>
+                <label class="checklist-item"><input type="checkbox" value="Supraglóticos"> Supraglóticos</label>
+                <label class="checklist-item"><input type="checkbox" value="Primeros Auxilios Psicológicos"> Primeros Auxilios Psicológicos</label>
+                <label class="checklist-item"><input type="checkbox" value="Otros"> Otros</label>
+            </div>
+
+            <div>
+                <label>Interpretación de Electrocardiograma</label>
+                <textarea id="ekg_interp" data-label="Interpretación Electrocardiograma" rows="2" placeholder="Describir ritmo, frecuencia, eje, alteraciones..."></textarea>
+            </div>
+
+            <label style="color:var(--naranja); font-weight:bold; margin-top:2px;">Otros Tratamientos Realizados:</label>
+            <div id="t_lista" class="list-area" data-label="Tratamientos Adicionales"></div>
+            <div class="no-pdf grid"><input type="text" id="t_i" placeholder="Acción..."><button type="button" class="btn-plus" onclick="addTrat()">+</button></div>
+            
+            <label style="color:var(--naranja); font-weight:bold; margin-top:2px;">Medicamentos Administrados:</label>
+            <div id="m_lista" class="list-area" data-label="Medicamentos"></div>
+            <div class="no-pdf grid"><input type="text" id="m_i" placeholder="Medicamento"><button type="button" class="btn-plus" onclick="addMed()">+</button></div>
+            
+            <div><label>Recomendaciones</label><textarea data-label="Recomendaciones" rows="2"></textarea></div>
+        </div>
+    </details>
+
+    <!-- SECCIÓN 7 -->
+    <details><summary>7. TRASLADO Y REGULACIÓN</summary>
+        <div class="content">
+            <div class="grid">
+                <div><label>¿Amerita traslado?</label><select data-label="Amerita Traslado"><option value="SI">SI</option><option value="NO">NO</option></select></div>
+                <div>
+                    <label>¿Se traslada?</label>
+                    <select data-label="Se traslada">
+                        <option value="SI">SI</option>
+                        <option value="NO">NO</option>
+                        <option value="RECHAZA ATENCIÓN">RECHAZA ATENCIÓN</option>
+                        <option value="RECHAZA TRASLADO">RECHAZA TRASLADO</option>
+                        <option value="RECHAZA ATENCIÓN Y TRASLADO">RECHAZA ATENCIÓN Y TRASLADO</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid">
+                <div><label>Folio CRUM</label><input type="text" data-label="Folio CRUM" placeholder="Folio"></div>
+                <div><label>Hospital Destino</label><input type="text" data-label="Hospital Destino" placeholder="Hospital"></div>
+                <div><label>Médico receptor</label><input type="text" data-label="Médico Receptor" placeholder="Médico"></div>
+            </div>
+        </div>
+    </details>
+
+    <!-- SECCIÓN 8 -->
+    <details><summary>8. VEHÍCULOS Y ADICIONALES</summary>
+        <div class="content">
+            <label style="color:var(--naranja); font-weight:bold;">Vehículos involucrados:</label>
+            <div id="v_lista" class="list-area" data-label="Vehículos involucrados"></div>
+            <div class="no-pdf grid"><input type="text" id="v_i" placeholder="Detalles del vehículo..."><button type="button" class="btn-plus" onclick="addVehiculo()">+</button></div>
+            <div class="grid">
+                <div><label>Pertenencias</label><input type="text" data-label="Pertenencias entregadas"></div>
+                <div><label>Autoridad</label><input type="text" data-label="Autoridad presente"></div>
+            </div>
+        </div>
+    </details>
+
+    <!-- SECCIÓN FIRMAS -->
+    <div id="seccion-firmas">
+        <h4 style="margin:0 0 4px 0; color:var(--rojo); border-bottom:1px solid var(--border-light); font-size:10px;">9. CIERRE Y FIRMAS</h4>
+        
+        <div class="firmas-stack">
+            <div class="sig-container pdf-section">
+                <label>Paramédico</label>
+                <div class="sig-box">
+                    <button type="button" class="btn-clear no-pdf" onclick="pads.pa.clear()">Limpiar</button>
+                    <canvas id="sig-pa"></canvas>
+                </div>
+                <input type="text" data-label="Nombre Paramédico" placeholder="Nombre Paramédico">
+            </div>
+
+            <div class="sig-container pdf-section">
+                <label>Médico / Hospital</label>
+                <div class="sig-box">
+                    <button type="button" class="btn-clear no-pdf" onclick="pads.pc.clear()">Limpiar</button>
+                    <canvas id="sig-pc"></canvas>
+                </div>
+                <input type="text" data-label="Médico / Hospital" placeholder="Médico/Hospital">
+            </div>
+            
+            <div class="sig-container pdf-section">
+                <label>Paciente / Familiar</label>
+                <div class="sig-box">
+                    <button type="button" class="btn-clear no-pdf" onclick="pads.px.clear()">Limpiar</button>
+                    <canvas id="sig-px"></canvas>
+                </div>
+                <input type="text" data-label="Paciente / Familiar" placeholder="Nombre/Parentesco">
+            </div>
+        </div>
+
+        <div class="pdf-section" style="margin-top: 4px;">
+            <label>Observaciones Finales</label>
+            <textarea data-label="Notas Finales" rows="2"></textarea>
+        </div>
+        <div class="nota-legal">
+            Nota legal: El presente FRAP digital se fundamenta en las normas NOM-004-SSA3-2012 y NOM-034-SSA3-2013, las cuales validan el uso de medios electrónicos para el registro de atención médica (Art. 89 C. Comercio). Manejo de datos confidenciales conforme a la LFPDPPP.
+        </div>
+    </div>
+</div>
+
+<div class="no-pdf" style="padding:15px; max-width:850px; margin:auto;">
+    <button class="btn-main" style="background:var(--rojo);" onclick="generarPDF()">💾 GENERAR FRAP - PDF </button>
+</div>
+
+<script>
+const pads = {};
+let anchoPantalla = 0; 
+
+const bodyMarkers = { anterior: [], posterior: [] };
+
+function autoCompletarPlaca() {
+    const unidad = document.getElementById('unidad_select').value;
+    const inputPlacas = document.getElementById('placas_input');
+    
+    switch (unidad) {
+        case '02':
+            inputPlacas.value = '79KHF8';
+            break;
+        case '03':
+            inputPlacas.value = 'AM-022-HR';
+            break;
+        case '04':
+            inputPlacas.value = 'AM-410-GC';
+            break;
+        default:
+            inputPlacas.value = '';
+            break;
+    }
+}
+
+function actualizarColorPrioridad() {
+    const sel = document.getElementById('prio_select');
+    if (!sel) return;
+    sel.classList.remove('prio-verde', 'prio-amarillo', 'prio-rojo', 'prio-negro');
+    
+    const val = sel.value;
+    if (val.includes('Verde')) {
+        sel.classList.add('prio-verde');
+    } else if (val.includes('Amarillo')) {
+        sel.classList.add('prio-amarillo');
+    } else if (val.includes('Roja')) {
+        sel.classList.add('prio-rojo');
+    } else if (val.includes('Negra')) {
+        sel.classList.add('prio-negro');
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const ids = ['pa', 'pc']; // IDs de tus firmas (sig-pa, sig-pc)
+    
+    ids.forEach(id => {
+        const canvas = document.getElementById(`sig-${id}`);
+        if (canvas) {
+            // Asignamos una resolución interna fija de alta calidad
+            // Esto evita que se borre al girar la pantalla
+            canvas.width = canvas.offsetWidth || 400;
+            canvas.height = 150; // coincide con la altura máxima de pantalla
+
+            // Inicializamos SignaturePad
+            pads[id] = new SignaturePad(canvas, {
+                backgroundColor: 'rgba(255, 255, 255, 0)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+        }
+    });
+});
+  
+function drawBodyOutline(ctx, isAnterior) {
+    ctx.clearRect(0, 0, 110, 170);
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 1.2;
+    ctx.fillStyle = '#ffffff';
+
+    // Cabeza y Cuello
+    ctx.beginPath();
+    ctx.arc(55, 18, 11, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.beginPath();
+    ctx.rect(51, 28, 8, 7);
+    ctx.fill(); ctx.stroke();
+
+    // Hombros y Torso
+    ctx.beginPath();
+    ctx.moveTo(42, 35);
+    ctx.bezierCurveTo(48, 33, 62, 33, 68, 35);
+    ctx.lineTo(72, 45);
+    ctx.lineTo(67, 85);
+    ctx.lineTo(69, 100);
+    ctx.lineTo(55, 105);
+    ctx.lineTo(41, 100);
+    ctx.lineTo(43, 85);
+    ctx.lineTo(38, 45);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Brazo Izquierdo
+    ctx.beginPath();
+    ctx.moveTo(38, 36);
+    ctx.lineTo(26, 65);
+    ctx.lineTo(23, 92);
+    ctx.lineTo(28, 93);
+    ctx.lineTo(32, 68);
+    ctx.lineTo(38, 46);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Brazo Derecho
+    ctx.beginPath();
+    ctx.moveTo(72, 36);
+    ctx.lineTo(84, 65);
+    ctx.lineTo(87, 92);
+    ctx.lineTo(82, 93);
+    ctx.lineTo(78, 68);
+    ctx.lineTo(72, 46);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Pierna Izquierda
+    ctx.beginPath();
+    ctx.moveTo(41, 100);
+    ctx.lineTo(42, 130);
+    ctx.lineTo(40, 160);
+    ctx.lineTo(48, 160);
+    ctx.lineTo(52, 130);
+    ctx.lineTo(54, 105);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Pierna Derecha
+    ctx.beginPath();
+    ctx.moveTo(69, 100);
+    ctx.lineTo(68, 130);
+    ctx.lineTo(70, 160);
+    ctx.lineTo(62, 160);
+    ctx.lineTo(58, 130);
+    ctx.lineTo(56, 105);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    if (!isAnterior) {
+        ctx.strokeStyle = '#888';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(55, 35); ctx.lineTo(55, 100);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+}
+
+function renderMarkers(type) {
+    const canvas = document.getElementById(`canvas-${type}`);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    drawBodyOutline(ctx, type === 'anterior');
+
+    bodyMarkers[type].forEach(m => {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#D32F2F';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+    });
+}
+
+function setupBodyCanvas(type) {
+    const canvas = document.getElementById(`canvas-${type}`);
+    if (!canvas) return;
+    renderMarkers(type);
+
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        bodyMarkers[type].push({ x, y });
+        renderMarkers(type);
+    });
+}
+
+function limpiarBodyMap(type) {
+    bodyMarkers[type].pop();
+    renderMarkers(type);
+}
+
+function resizeCanvas() {
+    if (window.innerWidth === anchoPantalla) return;
+    anchoPantalla = window.innerWidth;
+
+    ['pa', 'px', 'pc'].forEach(id => {
+        const canvas = document.getElementById('sig-' + id);
+        if (canvas) {
+            const datosFirma = pads[id] && !pads[id].isEmpty() ? pads[id].toData() : null;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            
+            if (pads[id]) {
+                pads[id].clear();
+                if (datosFirma) {
+                    pads[id].fromData(datosFirma);
+                }
+            }
+        }
+    });
+}
+
+window.onload = () => {
+    const n = localStorage.getItem('frap_n') || 1;
+    const hoy = new Date().toLocaleDateString('es-MX');
+    
+    document.getElementById('pdf-fol').innerText = "DA-" + String(n).padStart(5, '0');
+    document.getElementById('web-fol').innerText = document.getElementById('pdf-fol').innerText;
+    document.getElementById('pdf-fec').innerText = hoy;
+    document.getElementById('web-fec').innerText = hoy;
+
+    ['pa', 'px', 'pc'].forEach(id => {
+        const canvas = document.getElementById('sig-' + id);
+        if (canvas) {
+            pads[id] = new SignaturePad(canvas, { 
+                backgroundColor: 'rgb(255,255,255)',
+                penColor: 'rgb(0, 0, 0)' 
+            });
+        }
+    });
+
+    setupBodyCanvas('anterior');
+    setupBodyCanvas('posterior');
+
+    actualizarColorPrioridad();
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+};
+
+function addSigno() { 
+    const h = document.getElementById('s_h').value; 
+    if(h) {
+        const row = `<tr><td>${h}</td><td>${document.getElementById('s_fc').value}</td><td>${document.getElementById('s_fv').value}</td><td>${document.getElementById('s_ta').value}</td><td>${document.getElementById('s_sp').value}</td><td>${document.getElementById('s_temp').value}</td><td>${document.getElementById('s_g').value}</td><td>${document.getElementById('s_avdi').value}</td></tr>`;
+        document.getElementById('s_body').innerHTML += row;
+        ['s_h','s_fc','s_fv','s_ta','s_sp','s_temp','s_g'].forEach(id => document.getElementById(id).value = "");
+    }
+}
+function addHallazgo() { 
+    const z = document.getElementById('h_z').value; 
+    if(z) {
+        document.getElementById('h_lista').innerHTML += `• ${z}: ${document.getElementById('h_d').value}<br>`;
+        document.getElementById('h_z').value = ""; document.getElementById('h_d').value = "";
+    }
+}
+function addSintoma() {
+    const v = document.getElementById('sin_i').value;
+    if(v) {
+        document.getElementById('sin_lista').innerHTML += `• ${v}<br>`;
+        document.getElementById('sin_i').value = "";
+    }
+}
+function addTrat() { 
+    const v = document.getElementById('t_i').value; 
+    if(v) {
+        document.getElementById('t_lista').innerHTML += `• ${v}<br>`;
+        document.getElementById('t_i').value = "";
+    }
+}
+function addMed() { 
+    const v = document.getElementById('m_i').value; 
+    if(v) {
+        document.getElementById('m_lista').innerHTML += `• ${v}<br>`;
+        document.getElementById('m_i').value = "";
+    }
+}
+function addVehiculo() {
+    const v = document.getElementById('v_i').value;
+    if(v) {
+        document.getElementById('v_lista').innerHTML += `• ${v}<br>`;
+        document.getElementById('v_i').value = "";
+    }
+}
+
+async function generarPDF() {
+    const original = document.getElementById('frap-form');
+    const clon = original.cloneNode(true);
+    
+    // Procesar checklist de intervenciones
+    const intervencionesSeleccionadas = [];
+    original.querySelectorAll('#checklist_intervenciones input[type="checkbox"]:checked').forEach(chk => {
+        intervencionesSeleccionadas.push(chk.value);
+    });
+
+    const checklistClon = clon.querySelector('#checklist_intervenciones');
+    if (checklistClon) {
+        if (intervencionesSeleccionadas.length > 0) {
+            const divInterv = document.createElement('div');
+            divInterv.className = 'pdf-col-item';
+            divInterv.innerHTML = `<b>Procedimientos / Intervenciones:</b> ${intervencionesSeleccionadas.join(', ')}`;
+            checklistClon.replaceWith(divInterv);
+        } else {
+            checklistClon.remove();
+        }
+    }
+
+    // Procesar Interpretación ECG
+    const ekgText = document.getElementById('ekg_interp').value.trim();
+    const ekgClon = clon.querySelector('#ekg_interp');
+    if (ekgClon) {
+        const parentEkg = ekgClon.parentElement;
+        if (ekgText) {
+            const divEkg = document.createElement('div');
+            divEkg.className = 'pdf-col-item';
+            divEkg.innerHTML = `<b>Interpretación ECG:</b> ${ekgText}`;
+            if (parentEkg && parentEkg.tagName === 'DIV' && parentEkg.querySelector('label')) {
+                parentEkg.replaceWith(divEkg);
+            } else {
+                ekgClon.replaceWith(divEkg);
+            }
+        } else {
+            if (parentEkg && parentEkg.tagName === 'DIV' && parentEkg.querySelector('label')) {
+                parentEkg.remove();
+            } else {
+                ekgClon.remove();
+            }
+        }
+    }
+
+    // Procesamiento de inputs, selects y textareas evitando duplicación de labels
+    const inputsOriginales = original.querySelectorAll('input, select, textarea');
+    const inputsClonados = clon.querySelectorAll('input, select, textarea');
+
+    inputsClonados.forEach((el, index) => {
+        const originalEl = inputsOriginales[index];
+        if (!originalEl || originalEl.type === "file" || originalEl.type === "checkbox") return;
+
+        let valorMostrar = "---";
+        if (originalEl.tagName === "SELECT") {
+            if (originalEl.multiple) {
+                const seleccionados = Array.from(originalEl.selectedOptions).map(opt => opt.text);
+                valorMostrar = seleccionados.length > 0 ? seleccionados.join(', ') : "---";
+            } else {
+                if (originalEl.selectedIndex >= 0) valorMostrar = originalEl.options[originalEl.selectedIndex].text;
+            }
+        } else {
+            valorMostrar = originalEl.value || "---";
+        }
+        
+        const etiqueta = el.getAttribute('data-label');
+        if (etiqueta) {
+            const div = document.createElement('div');
+            div.className = 'pdf-col-item';
+            div.innerHTML = `<b>${etiqueta}:</b> ${valorMostrar}`;
+            
+            const parent = el.parentElement;
+            if (parent && parent.tagName === 'DIV' && parent.querySelector('label') && parent.children.length <= 2) {
+                parent.replaceWith(div);
+            } else {
+                if (el.previousElementSibling && el.previousElementSibling.tagName === 'LABEL') {
+                    el.previousElementSibling.remove();
+                }
+                el.replaceWith(div);
+            }
+        }
+    });
+
+    clon.querySelectorAll('.no-pdf, button, input[type="file"]').forEach(e => e.remove());
+
+    ['anterior', 'posterior'].forEach(type => {
+        const origCanvas = document.getElementById(`canvas-${type}`);
+        const clonCanvas = clon.querySelector(`#canvas-${type}`);
+        if (origCanvas && clonCanvas) {
+            const img = document.createElement('img');
+            img.src = origCanvas.toDataURL("image/png");
+            img.style.width = "95px";
+            img.style.height = "145px";
+            clonCanvas.replaceWith(img);
+        }
+    });
+
+    ['pa', 'px', 'pc'].forEach(id => {
+        const sigBox = clon.querySelector(`#sig-${id}`);
+        if(sigBox) {
+            const wrapper = sigBox.parentElement;
+            wrapper.innerHTML = '';
+            if (!pads[id].isEmpty()) {
+                const img = document.createElement('img');
+                img.src = pads[id].toDataURL("image/png");
+                img.style.width = "100%"; img.style.height = "35px";
+                img.style.display = "block"; img.style.margin = "auto";
+                wrapper.appendChild(img);
+            } else { wrapper.innerHTML = "<p style='text-align:center;color:#ccc; font-size:8px; margin:2px 0;'>SIN FIRMA</p>"; }
+        }
+    });
+
+    const headerPdf = clon.querySelector('#pdf-header');
+    headerPdf.style.display = 'block';
+    headerPdf.style.paddingTop = '8px';
+    
+    const gridColumns = document.createElement('div');
+    gridColumns.className = 'pdf-columns-container';
+    
+    const colLeft = document.createElement('div');
+    const colRight = document.createElement('div');
+
+    const detailsList = Array.from(clon.querySelectorAll('details'));
+    
+    detailsList.forEach((d, idx) => {
+        const title = d.querySelector('summary').innerText;
+        const content = d.querySelector('.content');
+        const wrap = document.createElement('div');
+        wrap.className = 'pdf-section';
+        wrap.innerHTML = `<div style="background:#006837; color:white; padding:2px 4px; font-weight:bold; margin-top:2px; font-size:9px;">${title}</div>`;
+        wrap.appendChild(content);
+
+        if (idx <= 3) {
+            colLeft.appendChild(wrap);
+        } else {
+            colRight.appendChild(wrap);
+        }
+        d.remove();
+    });
+
+    const firmas = clon.querySelector('#seccion-firmas');
+    firmas.style.background = 'white';
+    firmas.style.color = 'black';
+    colRight.appendChild(firmas);
+
+    gridColumns.appendChild(colLeft);
+    gridColumns.appendChild(colRight);
+
+    clon.appendChild(gridColumns);
+
+    clon.style.background = 'white';
+    clon.style.color = 'black';
+    clon.style.width = '210mm';
+    clon.style.padding = '8mm 5mm 5mm 5mm';
+    clon.style.boxSizing = 'border-box';
+
+    const opciones = {
+        margin: [5, 0, 0, 0],
+        filename: `FRAP_${document.getElementById('pdf-fol').innerText}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 1.8, useCORS: true, logging: false, scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: [] }
+    };
+
+    html2pdf().set(opciones).from(clon).toPdf().get('pdf').then(function (pdf) {
+        localStorage.setItem('frap_n', parseInt(localStorage.getItem('frap_n') || 1) + 1);
+    }).save();
+}
+</script>
+
+</body>
+</html>
